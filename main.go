@@ -15,9 +15,9 @@ func main() {
 		log.Fatal("Erro ao carregar variaveis de ambiente.")
 	}
 
-	cfg := api.NewWrsatAPIConfig(30 * time.Second)
-	cfg.SetAPIVariables()
-	client := api.NewWrsatAPIClient(cfg)
+	cfg := api.NewTrackerAPIConfig(30 * time.Second)
+	cfg.SetDefaultTracker()
+	client := api.NewTrackerAPIClient(cfg)
 	resp, err := client.ListaVeiculos()
 	if err != nil {
 		log.Fatal("Erro ao receber resposta da aplicação")

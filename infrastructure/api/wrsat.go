@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-type IWrsatAPIConfig interface {
-	SetAPIVariables()
+type ITrackerAPIConfig interface {
+	SetDefaultTracker()
 	getTimeout() time.Duration
 	getBaseUrl() string
 	getAuth() string
 	getJsonPayload() ([]byte, error)
 }
 
-type IWrsatAPIClient interface {
+type ITrackerAPIClient interface {
 	ListaVeiculos() (*http.Response, error)
 }
 
-type WrsatAPIConfig struct {
+type TrackerAPIConfig struct {
 	Username       string
 	Password       string
 	BaseURL        string
@@ -31,7 +31,7 @@ type WrsatAPIConfig struct {
 }
 
 // getPayload implements IWrsatAPIConfig.
-func (w *WrsatAPIConfig) getJsonPayload() ([]byte, error) {
+func (w *TrackerAPIConfig) getJsonPayload() ([]byte, error) {
 	jsonPayload, err := json.Marshal(w.DefaultPayload)
 	if err != nil {
 		return nil, fmt.Errorf("payload to json failed: %w", err)
@@ -40,16 +40,16 @@ func (w *WrsatAPIConfig) getJsonPayload() ([]byte, error) {
 }
 
 // getBaseUrl implements IWrsatAPIConfig.
-func (w *WrsatAPIConfig) getBaseUrl() string {
+func (w *TrackerAPIConfig) getBaseUrl() string {
 	return w.BaseURL
 }
 
-func (w *WrsatAPIConfig) getAuth() string {
+func (w *TrackerAPIConfig) getAuth() string {
 	return w.Username + ":" + w.Password
 }
 
 // SetHeaders implements IWrsatAPIConfig.
-func (w *WrsatAPIConfig) SetAPIVariables() {
+func (w *TrackerAPIConfig) SetDefaultTracker() {
 	w.DefaultPayload = map[string]string{
 		"usuario":   w.Username,
 		"senha":     w.Password,
@@ -60,17 +60,17 @@ func (w *WrsatAPIConfig) SetAPIVariables() {
 	}
 }
 
-func (w *WrsatAPIConfig) getTimeout() time.Duration {
+func (w *TrackerAPIConfig) getTimeout() time.Duration {
 	return w.Timeout
 }
 
-type WrsatAPIClient struct {
+type TrackerAPIClient struct {
 	client *http.Client
-	config IWrsatAPIConfig
+	config ITrackerAPIConfig
 }
 
 // listaVeiculos implements IWrsatAPIClient.
-func (w *WrsatAPIClient) ListaVeiculos() (*http.Response, error) {
+func (w *TrackerAPIClient) ListaVeiculos() (*http.Response, error) {
 	payload, _ := w.config.getJsonPayload()
 	req, err := http.NewRequest(
 		"POST",
@@ -93,8 +93,8 @@ func (w *WrsatAPIClient) ListaVeiculos() (*http.Response, error) {
 	return resp, nil
 }
 
-func NewWrsatAPIClient(cfg IWrsatAPIConfig) IWrsatAPIClient {
-	return &WrsatAPIClient{
+func NewTrackerAPIClient(cfg ITrackerAPIConfig) ITrackerAPIClient {
+	return &TrackerAPIClient{
 		client: &http.Client{
 			Timeout: cfg.getTimeout(),
 		},
@@ -102,8 +102,8 @@ func NewWrsatAPIClient(cfg IWrsatAPIConfig) IWrsatAPIClient {
 	}
 }
 
-func NewWrsatAPIConfig(timeout time.Duration) IWrsatAPIConfig {
-	return &WrsatAPIConfig{
+func NewTrackerAPIConfig(timeout time.Duration) ITrackerAPIConfig {
+	return &TrackerAPIConfig{
 		Username: os.Getenv("WRSAT_USER"),
 		Password: os.Getenv("WRSAT_PASSWORD"),
 		BaseURL:  os.Getenv("WRSAT_BASE_URL"),

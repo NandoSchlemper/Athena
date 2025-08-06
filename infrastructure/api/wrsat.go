@@ -1,10 +1,12 @@
 package api
 
 import (
+	"athena/domain"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -19,7 +21,7 @@ type ITrackerAPIConfig interface {
 }
 
 type ITrackerAPIClient interface {
-	ListaVeiculos() (*http.Response, error)
+	ListaVeiculos() (*domain.Response, error)
 	GetVehicleList(*http.Response) error
 }
 
@@ -76,8 +78,10 @@ func (w *TrackerAPIClient) GetVehicleList(*http.Response) error {
 }
 
 // listaVeiculos implements IWrsatAPIClient.
-func (w *TrackerAPIClient) ListaVeiculos() (*http.Response, error) {
+func (w *TrackerAPIClient) ListaVeiculos() (*domain.Response, error) {
 	payload, _ := w.config.getJsonPayload()
+	var response *domain.Response
+
 	req, err := http.NewRequest(
 		"POST",
 		w.config.getBaseUrl()+"/lista_veiculos",
@@ -96,7 +100,17 @@ func (w *TrackerAPIClient) ListaVeiculos() (*http.Response, error) {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
 
-	return resp, nil
+	if resp.Body == nil {
+		return nil, fmt.Errorf("no body friendo")
+	}
+
+	jsonBytes, _ := io.ReadAll(resp.Body)
+	if err := json.Unmarshal(jsonBytes, &response); err != nil {
+		return nil, fmt.Errorf("no json bro")
+	}
+
+	return response, nil
+
 }
 
 func NewTrackerAPIClient(cfg ITrackerAPIConfig) ITrackerAPIClient {

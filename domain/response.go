@@ -6,24 +6,23 @@ type Operacao struct {
 }
 
 type Dado struct {
-	ID         string   `json:"id"`
-	Placa      string   `json:"placa"`
-	Lat        float64  `json:"lat,string"`
-	Lon        float64  `json:"lon,string"`
-	Velocidade int      `json:"velocidade,string"`
-	Operação   Operacao `json:"web_grupo"`
-	Estado     string
-	Location   string
-	Motorista  string
+	ID         string   `bson:"id" json:"id"`
+	Placa      string   `bson:"placa" json:"placa"`
+	Lat        float64  `bson:"lat,string" json:"lat,string"`
+	Lon        float64  `bson:"lon,string" json:"lon,string"`
+	Velocidade int      `bson:"velocidade,string" json:"velocidade,string"`
+	Operacao   Operacao `bson:"web_grupo" json:"web_grupo"`
+	Estado     string   `bson:"estado"`
+	Motorista  string   `bson:"motorista"`
 }
 
 type Response struct {
-	Erro      bool   `json:"erro"`
-	Status    int    `json:"status"`
-	Mensagem  string `json:"mensagem"`
-	Ordem     string `json:"ordem"`
-	Limit     string `json:"limit"`
-	Pagina    string `json:"pagina"`
-	QtdResult int    `json:"qtd_result"`
-	Dados     []Dado `json:"dados"`
+	Erro      bool   `bson:"erro" json:"erro"`
+	Status    int    `bson:"status" json:"status"`
+	Mensagem  string `bson:"mensagem" json:"mensagem"`
+	Ordem     string `bson:"ordem" json:"ordem"`
+	Limit     string `bson:"limit" json:"limit"`
+	Pagina    string `bson:"pagina" json:"pagina"`
+	QtdResult int    `bson:"qtd_result" json:"qtd_result"`
+	Dados     []Dado `bson:"dados" json:"dados"`
 }

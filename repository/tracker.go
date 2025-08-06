@@ -1,15 +1,40 @@
 package repository
 
-import "go.mongodb.org/mongo-driver/v2/mongo"
+import (
+	"athena/domain"
+	"context"
+	"fmt"
 
-type IVehicleRepo interface{}
+	"go.mongodb.org/mongo-driver/v2/mongo"
+)
 
-// Inserir veiculos baseados no retorno da API
+type IVehicleRepository interface {
+	InsertManyVehicles(vehicles []domain.Dado) error
+	InsertOneVehicle(vehicle domain.Dado) error
+}
 
-type VehicleRepo struct {
+type VehicleRepository struct {
 	coll *mongo.Collection
 }
 
-func NewVehicleRepo(db *mongo.Database) IVehicleRepo {
-	return &VehicleRepo{coll: db.Collection("vehicles")}
+// InsertManyVehicles implements IVehicleRepository.
+func (v *VehicleRepository) InsertManyVehicles(vehicles []domain.Dado) error {
+	_, err := v.coll.InsertMany(context.TODO(), vehicles)
+	if err != nil {
+		return fmt.Errorf("erro ao inserir varias posições de veículos no DB: %w", err)
+	}
+	return nil
+}
+
+// InsertOneVehicle implements IVehicleRepository.
+func (v *VehicleRepository) InsertOneVehicle(vehicle domain.Dado) error {
+	_, err := v.coll.InsertOne(context.TODO(), vehicle)
+	if err != nil {
+		return fmt.Errorf("erro ao inserir uma posição do veículo no DB: %w", err)
+	}
+	return nil
+}
+
+func NewVehicleRepository(db *mongo.Database) IVehicleRepository {
+	return &VehicleRepository{coll: db.Collection("vehicles")}
 }

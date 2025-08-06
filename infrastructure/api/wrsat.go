@@ -20,6 +20,7 @@ type ITrackerAPIConfig interface {
 
 type ITrackerAPIClient interface {
 	ListaVeiculos() (*http.Response, error)
+	GetVehicleList(*http.Response) error
 }
 
 type TrackerAPIConfig struct {
@@ -67,6 +68,11 @@ func (w *TrackerAPIConfig) getTimeout() time.Duration {
 type TrackerAPIClient struct {
 	client *http.Client
 	config ITrackerAPIConfig
+}
+
+// GetVehicleList implements ITrackerAPIClient.
+func (w *TrackerAPIClient) GetVehicleList(*http.Response) error {
+	panic("unimplemented")
 }
 
 // listaVeiculos implements IWrsatAPIClient.

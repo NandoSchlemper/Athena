@@ -22,7 +22,6 @@ type ITrackerAPIConfig interface {
 
 type ITrackerAPIClient interface {
 	ListaVeiculos() (*domain.Response, error)
-	GetVehicleList(*http.Response) error
 }
 
 type TrackerAPIConfig struct {
@@ -48,7 +47,7 @@ func (w *TrackerAPIConfig) getBaseUrl() string {
 }
 
 func (w *TrackerAPIConfig) getAuth() string {
-	return w.Username + ":" + w.Password
+	return base64.StdEncoding.EncodeToString([]byte(w.Username + ":" + w.Password))
 }
 
 // SetHeaders implements IWrsatAPIConfig.
@@ -72,15 +71,15 @@ type TrackerAPIClient struct {
 	config ITrackerAPIConfig
 }
 
-// GetVehicleList implements ITrackerAPIClient.
-func (w *TrackerAPIClient) GetVehicleList(*http.Response) error {
-	panic("unimplemented")
-}
-
 // listaVeiculos implements IWrsatAPIClient.
 func (w *TrackerAPIClient) ListaVeiculos() (*domain.Response, error) {
-	payload, _ := w.config.getJsonPayload()
-	var response *domain.Response
+	payload, err := w.config.getJsonPayload()
+
+	if err != nil {
+		return nil, fmt.Errorf("again brother?")
+	}
+
+	var response domain.Response
 
 	req, err := http.NewRequest(
 		"POST",
@@ -92,7 +91,7 @@ func (w *TrackerAPIClient) ListaVeiculos() (*domain.Response, error) {
 		return nil, fmt.Errorf("failed to create request %w", err)
 	}
 
-	req.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(w.config.getAuth())))
+	req.Header.Add("Authorization", "Basic "+w.config.getAuth())
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := w.client.Do(req)
@@ -104,12 +103,17 @@ func (w *TrackerAPIClient) ListaVeiculos() (*domain.Response, error) {
 		return nil, fmt.Errorf("no body friendo")
 	}
 
-	jsonBytes, _ := io.ReadAll(resp.Body)
+	jsonBytes, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return nil, fmt.Errorf("brother just failed")
+	}
+
 	if err := json.Unmarshal(jsonBytes, &response); err != nil {
 		return nil, fmt.Errorf("no json bro")
 	}
 
-	return response, nil
+	return &response, nil
 
 }
 

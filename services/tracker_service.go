@@ -3,7 +3,10 @@ package services
 import (
 	"athena/infrastructure/api"
 	"athena/repository"
+	"athena/utils"
+	"context"
 	"fmt"
+	"time"
 )
 
 type ITrackerService interface {
@@ -22,7 +25,11 @@ func (t *TrackerService) SaveTrackerData() error {
 		return fmt.Errorf("erro na resposta da api: %w", err)
 	}
 
-	if err = t.repository.InsertManyVehicles(r.Dados); err != nil {
+	formatted := utils.ValidateSave(r)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err = t.repository.InsertManyVehicles(ctx, formatted); err != nil {
 		return fmt.Errorf("erro ao inserir os veículos")
 	}
 	return nil

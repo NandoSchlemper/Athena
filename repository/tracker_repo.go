@@ -9,7 +9,7 @@ import (
 )
 
 type ITrackerRepository interface {
-	InsertManyVehicles(vehicles []domain.Dado) error
+	InsertManyVehicles(ctx context.Context, vehicles []domain.Dado) error
 	InsertOneVehicle(vehicle domain.Dado) error
 }
 
@@ -18,8 +18,8 @@ type TrackerRepository struct {
 }
 
 // InsertManyVehicles implements IVehicleRepository.
-func (v *TrackerRepository) InsertManyVehicles(vehicles []domain.Dado) error {
-	_, err := v.coll.InsertMany(context.TODO(), vehicles)
+func (v *TrackerRepository) InsertManyVehicles(ctx context.Context, vehicles []domain.Dado) error {
+	_, err := v.coll.InsertMany(ctx, vehicles)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir varias posições de veículos no DB: %w", err)
 	}

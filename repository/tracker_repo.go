@@ -35,6 +35,6 @@ func (v *TrackerRepository) InsertOneVehicle(vehicle domain.Dado) error {
 	return nil
 }
 
-func NewVehicleRepository(db *mongo.Database) ITrackerRepository {
+func NewTrackerRepository(db *mongo.Database) ITrackerRepository {
 	return &TrackerRepository{coll: db.Collection("vehicles")}
 }

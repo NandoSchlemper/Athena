@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"os"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type IMongoDB interface {
-	InitDB() *mongo.Database
+	InitDB() (*mongo.Database, error)
 }
 
 type MongoDB struct {
@@ -20,13 +21,17 @@ type MongoDB struct {
 }
 
 // InitDB implements IMongoDB.
-func (m *MongoDB) InitDB() *mongo.Database {
+func (m *MongoDB) InitDB() (*mongo.Database, error) {
 	m.Uri = os.Getenv("DB_URL")
 
-	client, _ := mongo.Connect(options.Client().ApplyURI(m.Uri).SetMaxPoolSize(m.MaxPoolSize).SetMinPoolSize(m.MinPoolSize).SetMaxConnIdleTime(time.Duration(m.MaxConnIdleTime)))
+	client, err := mongo.Connect(options.Client().ApplyURI(m.Uri).SetMaxPoolSize(m.MaxPoolSize).SetMinPoolSize(m.MinPoolSize).SetMaxConnIdleTime(time.Duration(m.MaxConnIdleTime)))
+
+	if err != nil {
+		return nil, fmt.Errorf("erro ao iniciar o db, bruh")
+	}
 
 	DB := client.Database("AthenaDB")
-	return DB
+	return DB, nil
 }
 
 func NewMongoDB(minpool, maxpool, maxconn uint64) IMongoDB {

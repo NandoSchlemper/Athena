@@ -8,7 +8,7 @@ import (
 )
 
 type ITimerService interface {
-	StartApplication()
+	StartApplication(int)
 }
 
 type TimerService struct {
@@ -17,8 +17,8 @@ type TimerService struct {
 }
 
 // StartApplication implements ITimerService.
-func (t *TimerService) StartApplication() {
-	ticker := time.NewTicker(5 * time.Minute)
+func (t *TimerService) StartApplication(minutes int) {
+	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
 	for {

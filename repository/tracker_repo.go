@@ -20,7 +20,7 @@ type TrackerRepository struct {
 }
 
 // GetVehicles implements ITrackerRepository.
-func (v *TrackerRepository) GetVehicles() ([]domain.Dado, error) {
+func (v TrackerRepository) GetVehicles() ([]domain.Dado, error) {
 	findOpt := bson.D{{}} // todos os dados da collection
 	var result []domain.Dado
 
@@ -48,7 +48,7 @@ func (v *TrackerRepository) GetVehicles() ([]domain.Dado, error) {
 }
 
 // InsertManyVehicles implements IVehicleRepository.
-func (v *TrackerRepository) InsertManyVehicles(ctx context.Context, vehicles []domain.Dado) error {
+func (v TrackerRepository) InsertManyVehicles(ctx context.Context, vehicles []domain.Dado) error {
 	_, err := v.coll.InsertMany(ctx, vehicles)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir varias posições de veículos no DB: %w", err)
@@ -57,7 +57,7 @@ func (v *TrackerRepository) InsertManyVehicles(ctx context.Context, vehicles []d
 }
 
 // InsertOneVehicle implements IVehicleRepository.
-func (v *TrackerRepository) InsertOneVehicle(vehicle domain.Dado) error {
+func (v TrackerRepository) InsertOneVehicle(vehicle domain.Dado) error {
 	_, err := v.coll.InsertOne(context.TODO(), vehicle)
 	if err != nil {
 		return fmt.Errorf("erro ao inserir uma posição do veículo no DB: %w", err)

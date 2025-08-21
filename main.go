@@ -18,7 +18,7 @@ func main() {
 
 	cfg := api.NewTrackerAPIConfig(30 * time.Second)
 	cfg.SetDefaultTracker()
-	// client := api.NewTrackerAPIClient(cfg)
+	client := api.NewTrackerAPIClient(cfg)
 
 	dbrepo := repository.NewMongoDB(1, 20, 1)
 	db, err := dbrepo.InitDB()
@@ -28,12 +28,12 @@ func main() {
 	}
 
 	tracker_repo := repository.NewTrackerRepository(db)
-	reports_service := services.NewReportService(tracker_repo)
-	if err := reports_service.CreateReport(); err != nil {
-		log.Fatal("Erro ao criar a merda do excel %w", err)
-	}
+	// reports_service := services.NewReportService(tracker_repo)
+	// if err := reports_service.CreateReport(); err != nil {
+	// 	log.Fatal("Erro ao criar a merda do excel %w", err)
+	// }
 
-	// tracker_service := services.NewTrackerService(tracker_repo, client)
-	// application := services.NewTimerService(tracker_service, client)
-	// application.StartApplication(1) // roda a routine de 1 em 1 minuto.
+	tracker_service := services.NewTrackerService(tracker_repo, client)
+	application := services.NewTimerService(tracker_service, client)
+	application.StartApplication(10) // roda a routine de 1 em 1 minuto.
 }

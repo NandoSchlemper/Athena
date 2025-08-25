@@ -4,7 +4,11 @@ import (
 	"athena/infrastructure/api"
 	"athena/repository"
 	"athena/services"
+	"context"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -13,27 +17,38 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Erro ao carregar variaveis de ambiente.")
+		log.Printf("Erro ao carregar variáveis de ambiente: %v", err)
 	}
+
+	ctx, stop := signal.NotifyContext(
+		context.Background(),
+		os.Interrupt,
+		syscall.SIGTERM)
+	defer stop()
 
 	cfg := api.NewTrackerAPIConfig(30 * time.Second)
 	cfg.SetDefaultTracker()
 	client := api.NewTrackerAPIClient(cfg)
 
-	dbrepo := repository.NewMongoDB(1, 20, 1)
-	db, err := dbrepo.InitDB()
-
+	trackerRepo, err := repository.NewTrackerRepository()
 	if err != nil {
-		log.Fatal("Erro ao iniciar o banco de dados. %w", err)
+		log.Fatalf("Erro ao criar repositório: %v", err)
 	}
 
-	tracker_repo := repository.NewTrackerRepository(db)
-	// reports_service := services.NewReportService(tracker_repo)
-	// if err := reports_service.CreateReport(); err != nil {
-	// 	log.Fatal("Erro ao criar a merda do excel %w", err)
-	// }
+	trackerService := services.NewTrackerService(trackerRepo, client)
+	timerService := services.NewTimerService(trackerService, client)
 
-	tracker_service := services.NewTrackerService(tracker_repo, client)
-	application := services.NewTimerService(tracker_service, client)
-	application.StartApplication(10) // roda a routine de 1 em 1 minuto.
+	log.Println("Iniciando Athena Application...")
+	timerService.StartApplication(ctx, 1)
+
+	<-ctx.Done() // aguarda o evento de shutdown
+	log.Println("Recebido sinal de desligamento...")
+
+	timerService.StopApplication()
+
+	if err := repository.CloseMongoConnection(); err != nil {
+		log.Printf("Erro ao fechar conexão MongoDB: %v", err)
+	} // basicamente da o close na conexão
+
+	log.Println("Aplicação finalizada corretamente")
 }

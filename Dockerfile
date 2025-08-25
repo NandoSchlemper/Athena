@@ -14,7 +14,7 @@ FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/athena /athena
-COPY --from=builder /app/.env.dev ./.env.dev
+COPY --from=builder /app/.env.dev ./.env
 
 EXPOSE 8080
 

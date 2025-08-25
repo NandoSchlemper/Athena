@@ -32,16 +32,14 @@ type TrackerAPIConfig struct {
 	DefaultPayload map[string]string
 }
 
-// getPayload implements IWrsatAPIConfig.
 func (w *TrackerAPIConfig) getJsonPayload() ([]byte, error) {
 	jsonPayload, err := json.Marshal(w.DefaultPayload)
 	if err != nil {
-		return nil, fmt.Errorf("payload to json failed: %w", err)
+		return nil, fmt.Errorf("bro just failed %w", err)
 	}
 	return jsonPayload, nil
 }
 
-// getBaseUrl implements IWrsatAPIConfig.
 func (w *TrackerAPIConfig) getBaseUrl() string {
 	return w.BaseURL
 }
@@ -50,7 +48,6 @@ func (w *TrackerAPIConfig) getAuth() string {
 	return base64.StdEncoding.EncodeToString([]byte(w.Username + ":" + w.Password))
 }
 
-// SetHeaders implements IWrsatAPIConfig.
 func (w *TrackerAPIConfig) SetDefaultTracker() {
 	w.DefaultPayload = map[string]string{
 		"usuario":   w.Username,
@@ -71,24 +68,19 @@ type TrackerAPIClient struct {
 	config ITrackerAPIConfig
 }
 
-// listaVeiculos implements IWrsatAPIClient.
 func (w *TrackerAPIClient) ListaVeiculos() (*domain.Response, error) {
 	payload, err := w.config.getJsonPayload()
-
 	if err != nil {
-		return nil, fmt.Errorf("again brother?")
+		return nil, fmt.Errorf("failed. sus. owo %w", err)
 	}
-
-	var response domain.Response
 
 	req, err := http.NewRequest(
 		"POST",
 		w.config.getBaseUrl()+"/lista_veiculos",
 		bytes.NewBuffer(payload),
 	)
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request %w", err)
+		return nil, fmt.Errorf("no request 4 u %w", err)
 	}
 
 	req.Header.Add("Authorization", "Basic "+w.config.getAuth())
@@ -96,25 +88,30 @@ func (w *TrackerAPIClient) ListaVeiculos() (*domain.Response, error) {
 
 	resp, err := w.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
+		return nil, fmt.Errorf("u're a failure %w", err)
 	}
+	defer resp.Body.Close()
 
-	if resp.Body == nil {
-		return nil, fmt.Errorf("no body friendo")
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
 	}
 
 	jsonBytes, err := io.ReadAll(resp.Body)
-
 	if err != nil {
-		return nil, fmt.Errorf("brother just failed")
+		return nil, fmt.Errorf("no fucking body: %w", err)
 	}
 
+	// Debug: print the raw response
+	// fmt.Printf("Raw response: %s\n", string(jsonBytes))
+	// obs: nunca mais fazer isso
+
+	var response domain.Response
 	if err := json.Unmarshal(jsonBytes, &response); err != nil {
-		return nil, fmt.Errorf("no json bro")
+		return nil, fmt.Errorf("FAILED TO JSON BRUH, FAILED!: %w. Response: %s", err, string(jsonBytes))
 	}
 
 	return &response, nil
-
 }
 
 func NewTrackerAPIClient(cfg ITrackerAPIConfig) ITrackerAPIClient {
@@ -127,10 +124,12 @@ func NewTrackerAPIClient(cfg ITrackerAPIConfig) ITrackerAPIClient {
 }
 
 func NewTrackerAPIConfig(timeout time.Duration) ITrackerAPIConfig {
-	return &TrackerAPIConfig{
+	cfg := &TrackerAPIConfig{
 		Username: os.Getenv("WRSAT_USER"),
 		Password: os.Getenv("WRSAT_PASSWORD"),
 		BaseURL:  os.Getenv("WRSAT_BASE_URL"),
 		Timeout:  timeout,
 	}
+	cfg.SetDefaultTracker()
+	return cfg
 }

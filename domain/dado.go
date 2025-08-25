@@ -12,5 +12,5 @@ type Dado struct {
 	// Operacao    Operacao `bson:"web_grupo" json:"web_grupo"`
 	// Estado    string `bson:"estado" no:"7"`
 	// Motorista string `bson:"motorista" no:"8"`
-	Horario time.Time `bson:"data"`
+	Horario time.Time `bson:"data" json:"datagps"`
 }

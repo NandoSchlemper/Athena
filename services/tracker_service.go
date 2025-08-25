@@ -26,11 +26,11 @@ func (t *TrackerService) SaveTrackerData() error {
 	}
 
 	formatted := utils.ValidateSave(r)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err = t.repository.InsertManyVehicles(ctx, formatted); err != nil {
-		return fmt.Errorf("erro ao inserir os veículos")
+		return fmt.Errorf("erro ao inserir veículos: %w", err)
 	}
 	return nil
 }

@@ -1,43 +1,84 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type IMongoDB interface {
-	InitDB() (*mongo.Database, error)
-}
+var (
+	once      sync.Once
+	client    *mongo.Client
+	clientErr error
+)
 
-type MongoDB struct {
-	Uri             string
+type MongoDBConfig struct {
+	URI             string
 	MinPoolSize     uint64
 	MaxPoolSize     uint64
-	MaxConnIdleTime uint64
+	MaxConnIdleTime time.Duration
 }
 
-// InitDB implements IMongoDB.
-func (m *MongoDB) InitDB() (*mongo.Database, error) {
-	m.Uri = os.Getenv("DB_URL")
+func GetMongoClient(config MongoDBConfig) (*mongo.Client, error) {
+	once.Do(func() {
+		uri := config.URI
+		if uri == "" {
+			uri = os.Getenv("DB_URL")
+		}
 
-	client, err := mongo.Connect(options.Client().ApplyURI(m.Uri).SetMaxPoolSize(m.MaxPoolSize).SetMinPoolSize(m.MinPoolSize).SetMaxConnIdleTime(time.Duration(m.MaxConnIdleTime)))
+		if uri == "" {
+			clientErr = fmt.Errorf("DB_URL não configurado")
+			return
+		}
 
+		opts := options.Client().
+			ApplyURI(uri).
+			SetMinPoolSize(config.MinPoolSize).
+			SetMaxPoolSize(config.MaxPoolSize).
+			SetMaxConnIdleTime(config.MaxConnIdleTime)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		client, clientErr = mongo.Connect(opts)
+		if clientErr != nil {
+			return
+		}
+
+		// Verifica a conexão
+		clientErr = client.Ping(ctx, nil)
+	})
+
+	return client, clientErr
+}
+
+func GetDatabase(dbName string) (*mongo.Database, error) {
+	config := MongoDBConfig{
+		URI:             os.Getenv("DB_URL"),
+		MinPoolSize:     10,
+		MaxPoolSize:     100,
+		MaxConnIdleTime: 30 * time.Minute,
+	}
+
+	client, err := GetMongoClient(config)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao iniciar o db, bruh")
+		return nil, err
 	}
 
-	DB := client.Database("AthenaDB")
-	return DB, nil
+	return client.Database(dbName), nil
 }
 
-func NewMongoDB(minpool, maxpool, maxconn uint64) IMongoDB {
-	return &MongoDB{
-		MinPoolSize:     minpool,
-		MaxPoolSize:     maxpool,
-		MaxConnIdleTime: maxconn,
+// Função para fechar a conexão (usar no shutdown da aplicação)
+func CloseMongoConnection() error {
+	if client != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return client.Disconnect(ctx)
 	}
+	return nil
 }
